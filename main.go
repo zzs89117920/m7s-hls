@@ -96,7 +96,7 @@ func (c *HLSConfig) OnEvent(event any) {
 		streamPath := v.Target.Path
 		delete(writing, streamPath)
 		db := 	m7sdb.MysqlDB()
-		db.Model(&PullDevice{}).Where("streamPath = ?", streamPath).Update("status", "2")
+		db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Update("status", "2")
 	case SEpublish:
 		if writing[v.Target.Path] == nil && (c.filterReg == nil || c.filterReg.MatchString(v.Target.Path)) {
 			if _, ok := v.Target.Publisher.(*HLSPuller); !ok || hlsConfig.RelayMode == 0 {
@@ -129,7 +129,6 @@ func (config *HLSConfig) API_Save(w http.ResponseWriter, r *http.Request) {
 	}
 }
 type PullDevice struct {
-	ID string
 	Type int
 	StreamPath string
 	Target string
