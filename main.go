@@ -95,8 +95,14 @@ func (c *HLSConfig) OnEvent(event any) {
 	case SEclose:
 		streamPath := v.Target.Path
 		delete(writing, streamPath)
+		
 		db := 	m7sdb.MysqlDB()
-		db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Update("status", "2")
+		var count int64
+		db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Count(&count)
+		if(count > 0){
+			db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Update("status", "2")
+		}
+	
 	case SEpublish:
 		if writing[v.Target.Path] == nil && (c.filterReg == nil || c.filterReg.MatchString(v.Target.Path)) {
 			if _, ok := v.Target.Publisher.(*HLSPuller); !ok || hlsConfig.RelayMode == 0 {
