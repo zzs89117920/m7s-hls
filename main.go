@@ -135,6 +135,7 @@ type PullDevice struct {
 	IsRecord bool
 	CreateTime time.Time
 	UserId int
+	Status int
 }
 func str2number(s string) int {
 	switch s {
@@ -157,9 +158,9 @@ func (config *HLSConfig) API_Pull(w http.ResponseWriter, r *http.Request) {
 			userId := str2number(r.URL.Query().Get("UserId"))
 			db := 	m7sdb.MysqlDB()
 			var count int64
-			db.Model(&PullDevice{}).Where("streamPath = ?", streamPath).Count(&count)
+			db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Count(&count)
 			if(count==0){
-				device := PullDevice{ Type:1, CreateTime: time.Now(), UserId: userId, IsRecord:false, StreamPath:streamPath, Target: targetURL }
+				device := PullDevice{ Type:1, CreateTime: time.Now(), UserId: userId, IsRecord:false, StreamPath:streamPath, Target: targetURL, Status:1 }
 				db.Create(&device)
 			}
 		}
