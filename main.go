@@ -63,11 +63,23 @@ func (c *HLSConfig) OnEvent(event any) {
 		if c.Filter != "" {
 			c.filterReg = regexp.MustCompile(c.Filter)
 		}
-		for streamPath, url := range c.PullOnStart {
-			if err := HLSPlugin.Pull(streamPath, url, new(HLSPuller), 0); err != nil {
-				HLSPlugin.Error("pull", zap.String("streamPath", streamPath), zap.String("url", url), zap.Error(err))
+
+		var pullDevices []PullDevice
+		db := 	m7sdb.MysqlDB()
+		result := db.Where("type = ?", 1).Find(&pullDevices)
+		if(result.RowsAffected>0){
+			for _, item := range pullDevices {
+				if err := HLSPlugin.Pull(item.StreamPath, item.Target, new(HLSPuller), 0); err != nil {
+					HLSPlugin.Error("pull", zap.String("streamPath", item.StreamPath), zap.String("url", item.Target), zap.Error(err))
+				}
 			}
 		}
+
+		// for streamPath, url := range c.PullOnStart {
+		// 	if err := HLSPlugin.Pull(streamPath, url, new(HLSPuller), 0); err != nil {
+		// 		HLSPlugin.Error("pull", zap.String("streamPath", streamPath), zap.String("url", url), zap.Error(err))
+		// 	}
+		// }
 		if c.DefaultTS != "" {
 			ts, err := os.ReadFile(c.DefaultTS)
 			if err == nil {
