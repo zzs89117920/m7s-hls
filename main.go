@@ -66,7 +66,7 @@ func (c *HLSConfig) OnEvent(event any) {
 
 		var pullDevices []PullDevice
 		db := 	m7sdb.MysqlDB()
-		result := db.Where("type = ?", 1).Find(&pullDevices)
+		result := db.Where("type = ? and save = ?", 1, 1).Find(&pullDevices)
 		if(result.RowsAffected>0){
 			for _, item := range pullDevices {
 				if err := HLSPlugin.Pull(item.StreamPath, item.Target, new(HLSPuller), 0); err != nil {
@@ -154,6 +154,7 @@ type PullDevice struct {
 	CreateTime time.Time
 	UserId int
 	Status int
+	Save int
 }
 func str2number(s string) int {
 	switch s {
@@ -168,17 +169,16 @@ func str2number(s string) int {
 func (config *HLSConfig) API_Pull(w http.ResponseWriter, r *http.Request) {
 	targetURL := r.URL.Query().Get("target")
 	streamPath := r.URL.Query().Get("streamPath")
-	save, _ := strconv.Atoi(r.URL.Query().Get("save"))
+	save :=  str2number(r.URL.Query().Get("save"))
 	if err := HLSPlugin.Pull(streamPath, targetURL, new(HLSPuller), save); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
 		if(save>0){
-			userId := str2number(r.URL.Query().Get("UserId"))
 			db := 	m7sdb.MysqlDB()
 			var count int64
 			db.Model(&PullDevice{}).Where("stream_path = ?", streamPath).Count(&count)
 			if(count==0){
-				device := PullDevice{ Type:1, CreateTime: time.Now(), UserId: userId, IsRecord:false, StreamPath:streamPath, Target: targetURL, Status:1 }
+				device := PullDevice{ Type:1, CreateTime: time.Now(), UserId: 0, IsRecord:false, StreamPath:streamPath, Target: targetURL, Status:1 ,Save:save}
 				db.Create(&device)
 			}
 		}
